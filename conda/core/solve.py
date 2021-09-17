@@ -11,6 +11,7 @@ import os
 import sys
 from textwrap import dedent
 from itertools import chain
+import warnings
 
 from .index import get_reduced_index, _supplement_index_with_system
 from .link import PrefixSetup, UnlinkLinkTransaction
@@ -1322,7 +1323,15 @@ class LibSolvSolver(Solver):
                     if ms.name != "python":
                         final_specs.append(MatchSpec(ms.name))
             specs_to_add += list(set(final_specs))
-        return [s.conda_build_form() for s in specs_to_add]
+        # return [s.conda_build_form() for s in specs_to_add]
+        specs_form = []
+        for s in specs_to_add:
+            if not s.get_exact_value('name'):
+                # XXX: we do not know how to handle feature specs, etc.
+                warnings.warn(f'Cannot handle {s}, ignoring...')
+                continue
+            specs_form.append(s.conda_build_form())
+        return specs_form
 
     def _pin_python(self, state, **kwargs):
         """
